@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.5);
+}
+
+/* Shimmer, glow and forensic motion keyframes */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(0.4deg); }
+}
+
+@keyframes wave-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 22px; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gleam {
+  0%, 100% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+  15% { opacity: 0.75; }
+  30% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+}
+
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes ambient-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.1); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+.animate-gleam {
+  animation: gleam 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradient-flow 8s ease infinite;
+}
+
+.animate-ambient-glow {
+  animation: ambient-glow 7s ease-in-out infinite;
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+/* Spotlight glow background effect */
+.spotlight-glow {
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(6, 182, 212, 0.08), transparent 40%);
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Radiant gradient border helper */
+.gradient-border-mask {
+  position: relative;
+}
+.gradient-border-mask::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.5), rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Cyber radar grid background */
+.bg-grid-pattern {
+  background-image: radial-gradient(rgba(6, 182, 212, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
