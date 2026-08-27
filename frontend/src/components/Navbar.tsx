@@ -21,7 +21,14 @@ import {
   FilePlus2,
   Terminal,
   Activity,
-  FolderOpen
+  FolderOpen,
+  Eye,
+  Bell,
+  Home,
+  Brain,
+  FileText,
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
 import { ThemeMode, ModelOption } from '../types';
 import { Logo } from './Logo';
@@ -33,6 +40,10 @@ interface NavbarProps {
   onNavigate: (sectionId: string) => void;
   onOpenCommandPalette: () => void;
   onOpenIntakeWizard: () => void;
+  onOpenWatchlist?: () => void;
+  onOpenAlerts?: () => void;
+  onOpenReportModal?: () => void;
+  unacknowledgedAlertsCount?: number;
   selectedModel: ModelOption;
   onSelectModel: (model: ModelOption) => void;
   availableModels: ModelOption[];
@@ -45,32 +56,30 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigate,
   onOpenCommandPalette,
   onOpenIntakeWizard,
+  onOpenWatchlist,
+  onOpenAlerts,
+  onOpenReportModal,
+  unacknowledgedAlertsCount = 0,
   selectedModel,
   onSelectModel,
   availableModels,
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
-  const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedWorkspace, setSelectedWorkspace] = useState('Case #CT-2026-0184');
 
   const isDark = theme === 'dark';
 
-  const workspaces = [
-    { name: 'Case #CT-2026-0184', tier: 'Active Peel Trace' },
-    { name: 'National Cyber Cell Hub', tier: 'Law Enforcement' },
-    { name: 'Demo Synthetic Sandbox', tier: 'SIH Evaluation' },
-  ];
-
   const navLinks = [
-    { id: 'investigate', label: 'Investigate', icon: Shield },
-    { id: 'dashboard', label: 'Command Center', icon: Activity },
-    { id: 'capabilities', label: 'Methodology', icon: Cpu },
-    { id: 'integrations', label: 'Intel Feeds', icon: Workflow },
-    { id: 'playground', label: 'Sandbox', icon: Sliders },
-    { id: 'benchmarks', label: 'Telemetry', icon: Gauge },
+    { id: 'investigate', label: 'Home', icon: Home, action: () => onNavigate('investigate') },
+    { id: 'start-investigation', label: 'Investigation', icon: Shield, action: () => onNavigate('investigate') },
+    { id: 'dashboard', label: 'Cases', icon: FolderOpen, action: () => onNavigate('dashboard') },
+    { id: 'capabilities', label: 'Network', icon: Activity, action: () => onNavigate('capabilities') },
+    { id: 'copilot', label: 'AI Copilot', icon: Brain, action: () => onOpenCommandPalette() },
+    { id: 'reports', label: 'Reports', icon: FileText, action: () => (onOpenReportModal ? onOpenReportModal() : onNavigate('investigate')) },
+    { id: 'alerts', label: 'Alerts', icon: Bell, action: () => (onOpenAlerts ? onOpenAlerts() : onNavigate('dashboard')) },
+    { id: 'watchlist', label: 'Watchlist', icon: Eye, action: () => (onOpenWatchlist ? onOpenWatchlist() : onNavigate('dashboard')) },
   ];
 
   // Track scroll state for glassmorphic styling
@@ -100,104 +109,37 @@ export const Navbar: React.FC<NavbarProps> = ({
       initial={{ y: -60, opacity: 0, filter: 'blur(10px)' }}
       animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
       transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? isDark
-            ? 'bg-zinc-950/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-cyan-950/50 shadow-2xl shadow-black/70 py-2.5 sm:py-3'
-            : 'bg-white/90 backdrop-blur-2xl backdrop-saturate-150 border-b border-zinc-200/90 shadow-xl shadow-zinc-200/40 py-2.5 sm:py-3'
-          : 'bg-transparent py-4 sm:py-5'
+            ? 'bg-zinc-950/90 backdrop-blur-2xl border-b border-zinc-800/80 shadow-2xl shadow-black/80 py-2.5 sm:py-3'
+            : 'bg-white/95 backdrop-blur-2xl border-b border-zinc-200/90 shadow-xl shadow-zinc-200/40 py-2.5 sm:py-3'
+          : 'bg-transparent py-3 sm:py-4'
       }`}
     >
       {/* Top subtle ambient beam line */}
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-        {/* Left: Brand & Case/Workspace Switcher */}
-        <div className="flex items-center gap-3 md:gap-4">
+        {/* Left: Brand Logo */}
+        <div className="flex items-center gap-3">
           <Logo
             theme={theme}
             scrolled={scrolled}
             onClick={() => onNavigate('investigate')}
           />
-
-          {/* Case Switcher Pill */}
-          <div className="relative hidden xl:block">
-            <button
-              id="workspace-switcher-button"
-              onClick={() => {
-                setWorkspaceDropdownOpen(!workspaceDropdownOpen);
-                setModelDropdownOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-lg border transition-all ${
-                isDark
-                  ? 'bg-zinc-900/70 border-zinc-800/90 text-cyan-400 hover:border-cyan-500/40 hover:bg-zinc-800/80 shadow-inner'
-                  : 'bg-zinc-100/90 border-zinc-200 text-cyan-800 hover:border-cyan-300 hover:bg-zinc-200/80 shadow-sm'
-              }`}
-            >
-              <FolderOpen className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="truncate max-w-[140px]">{selectedWorkspace}</span>
-              <ChevronDown
-                className={`w-3 h-3 text-zinc-400 transition-transform duration-200 ${
-                  workspaceDropdownOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {workspaceDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                  transition={{ duration: 0.16, ease: 'easeOut' }}
-                  className={`absolute left-0 mt-2 w-64 rounded-2xl border p-1.5 shadow-2xl z-50 ${
-                    isDark
-                      ? 'bg-zinc-900/95 backdrop-blur-2xl border-zinc-800 text-zinc-200 shadow-black/80'
-                      : 'bg-white/95 backdrop-blur-2xl border-zinc-200 text-zinc-800 shadow-xl'
-                  }`}
-                >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-3 py-1.5">
-                    Investigative Workspaces
-                  </div>
-                  {workspaces.map((ws) => (
-                    <button
-                      key={ws.name}
-                      onClick={() => {
-                        setSelectedWorkspace(ws.name);
-                        setWorkspaceDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors ${
-                        selectedWorkspace === ws.name
-                          ? isDark
-                            ? 'bg-cyan-500/15 text-cyan-300 font-semibold'
-                            : 'bg-cyan-50 text-cyan-700 font-semibold'
-                          : isDark
-                          ? 'hover:bg-zinc-800/80 text-zinc-300'
-                          : 'hover:bg-zinc-100 text-zinc-700'
-                      }`}
-                    >
-                      <span className="truncate">{ws.name}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800/60 text-zinc-400 border border-zinc-700/40">
-                        {ws.tier}
-                      </span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
 
-        {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 rounded-full p-1.5 border transition-all glass-panel">
+        {/* Center: Desktop Navigation Links (From Reference Image) */}
+        <nav className="hidden xl:flex items-center gap-1 rounded-full p-1 border transition-all glass-panel">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = activeSection === link.id;
+            const isActive = activeSection === link.id || (link.id === 'investigate' && activeSection === 'investigate');
 
             return (
               <button
                 key={link.id}
-                onClick={() => onNavigate(link.id)}
+                onClick={link.action}
                 onMouseEnter={() => setHoveredNav(link.id)}
                 onMouseLeave={() => setHoveredNav(null)}
                 className={`relative px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors duration-200 flex items-center gap-1.5 cursor-pointer ${
@@ -230,99 +172,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Right: Actions (Start Case, Model, Command Palette, Theme, Mobile Toggle) */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Start Investigation CTA */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onOpenIntakeWizard}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-cyan-500/25 transition-all cursor-pointer"
-          >
-            <FilePlus2 className="w-3.5 h-3.5" />
-            <span>Start Investigation</span>
-          </motion.button>
-
-          {/* Model Selector Dropdown */}
-          <div className="relative hidden md:block">
-            <button
-              onClick={() => {
-                setModelDropdownOpen(!modelDropdownOpen);
-                setWorkspaceDropdownOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                isDark
-                  ? 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:border-zinc-700'
-                  : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:border-zinc-300'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="truncate max-w-[110px]">{selectedModel.name.split(' ')[0]}</span>
-              <ChevronDown className="w-3 h-3 text-zinc-400" />
-            </button>
-
-            <AnimatePresence>
-              {modelDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                  className={`absolute right-0 mt-2 w-72 rounded-2xl border p-2 shadow-2xl z-50 ${
-                    isDark
-                      ? 'bg-zinc-900/95 backdrop-blur-2xl border-zinc-800 text-zinc-200 shadow-black/80'
-                      : 'bg-white/95 backdrop-blur-2xl border-zinc-200 text-zinc-800 shadow-xl'
-                  }`}
-                >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-3 py-1.5">
-                    Forensics Reasoning Model
-                  </div>
-                  {availableModels.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => {
-                        onSelectModel(m);
-                        setModelDropdownOpen(false);
-                      }}
-                      className={`w-full p-2.5 rounded-xl text-left transition-colors mb-1 ${
-                        selectedModel.id === m.id
-                          ? isDark
-                            ? 'bg-cyan-500/15 border border-cyan-500/30'
-                            : 'bg-cyan-50 border border-cyan-200'
-                          : isDark
-                          ? 'hover:bg-zinc-800/80'
-                          : 'hover:bg-zinc-100'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-xs font-semibold">
-                        <span>{m.name}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono">
-                          {m.speed}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-                        {m.description}
-                      </div>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Quick Command Palette Button */}
-          <button
-            onClick={onOpenCommandPalette}
-            className={`p-2 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 ${
-              isDark
-                ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
-                : 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:text-zinc-900'
-            }`}
-            title="Open Command Palette (⌘K)"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px] font-mono text-zinc-500">⌘K</span>
-          </button>
-
+        {/* Right: Actions (Theme, Notification Bell, Investigator Profile) */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
@@ -336,10 +187,96 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
+          {/* Real-time Alert Notification Bell */}
+          <button
+            onClick={onOpenAlerts}
+            className={`relative p-2 rounded-xl border text-xs font-medium transition-all ${
+              isDark
+                ? 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300'
+                : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:border-cyan-300'
+            }`}
+            title="Real-Time Alerts Feed"
+          >
+            <Bell className="w-4 h-4" />
+            {unacknowledgedAlertsCount > 0 && (
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[9px] font-bold border border-zinc-950 animate-pulse">
+                {unacknowledgedAlertsCount}
+              </span>
+            )}
+          </button>
+
+          {/* Investigator Profile Badge (From Reference Image) */}
+          <div className="relative">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-mono font-medium transition-colors ${
+                isDark
+                  ? 'bg-zinc-900/90 border-zinc-800 text-zinc-200 hover:border-zinc-700'
+                  : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:border-zinc-400'
+              }`}
+            >
+              <div className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                <UserCheck className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="font-bold text-[11px] leading-tight">Investigator</div>
+                <div className="flex items-center gap-1 text-[9px] text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Online</span>
+                </div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+            </button>
+
+            {/* Profile Dropdown */}
+            <AnimatePresence>
+              {profileDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  className={`absolute right-0 mt-2 w-56 rounded-2xl border p-2 shadow-2xl z-50 ${
+                    isDark
+                      ? 'bg-zinc-900/95 border-zinc-800 text-zinc-200'
+                      : 'bg-white border-zinc-200 text-zinc-800'
+                  }`}
+                >
+                  <div className="p-2 border-b border-zinc-800 text-xs">
+                    <div className="font-bold text-zinc-100">Special Agent Cyber Cell</div>
+                    <div className="text-[10px] text-cyan-400">ID #IN-88910-SIH</div>
+                  </div>
+
+                  <div className="p-1 space-y-1 text-xs font-mono">
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onOpenIntakeWizard();
+                      }}
+                      className="w-full text-left px-2.5 py-1.5 rounded-xl hover:bg-zinc-800 flex items-center gap-2"
+                    >
+                      <FilePlus2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>New Investigation Intake</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        if (onOpenWatchlist) onOpenWatchlist();
+                      }}
+                      className="w-full text-left px-2.5 py-1.5 rounded-xl hover:bg-zinc-800 flex items-center gap-2"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Monitored Watchlists</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl border border-zinc-800 text-zinc-400 hover:text-white"
+            className="xl:hidden p-2 rounded-xl border border-zinc-800 text-zinc-400 hover:text-white"
             aria-label="Open Mobile Menu"
           >
             {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -354,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className={`lg:hidden border-b px-4 py-6 space-y-4 ${
+            className={`xl:hidden border-b px-4 py-6 space-y-3 ${
               isDark ? 'bg-zinc-950/98 border-zinc-800 text-zinc-200' : 'bg-white/98 border-zinc-200 text-zinc-800'
             }`}
           >
@@ -365,29 +302,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={link.id}
                     onClick={() => {
-                      onNavigate(link.id);
+                      link.action();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/50 text-sm font-medium"
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-800/50 text-xs font-mono font-medium"
                   >
                     <Icon className="w-4 h-4 text-cyan-400" />
                     <span>{link.label}</span>
                   </button>
                 );
               })}
-            </div>
-
-            <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  onOpenIntakeWizard();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center gap-2"
-              >
-                <FilePlus2 className="w-4 h-4" />
-                <span>Start New Investigation</span>
-              </button>
             </div>
           </motion.div>
         )}

@@ -16,7 +16,9 @@ import {
   FolderOpen,
   Activity,
   FilePlus2,
-  Download
+  Download,
+  Eye,
+  Bell
 } from 'lucide-react';
 import { ThemeMode, ModelOption, OmnibarMode, BlockchainNetwork } from '../types';
 
@@ -31,6 +33,9 @@ interface CommandPaletteModalProps {
   onTriggerInvestigation: (wallet: string, mode: OmnibarMode, chain: BlockchainNetwork) => void;
   onOpenIntakeWizard: () => void;
   onOpenReportModal: () => void;
+  onOpenWatchlist?: () => void;
+  onOpenAlerts?: () => void;
+  onOpenRulesModal?: () => void;
 }
 
 export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
@@ -44,6 +49,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onTriggerInvestigation,
   onOpenIntakeWizard,
   onOpenReportModal,
+  onOpenWatchlist,
+  onOpenAlerts,
+  onOpenRulesModal,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const isDark = theme === 'dark';
@@ -67,6 +75,36 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   if (!isOpen) return null;
 
   const actions = [
+    {
+      id: 'cmd-watchlist',
+      title: 'Open Watchlist & Surveillance Directory',
+      category: 'Intelligence',
+      icon: Eye,
+      action: () => {
+        onClose();
+        if (onOpenWatchlist) onOpenWatchlist();
+      },
+    },
+    {
+      id: 'cmd-alerts',
+      title: 'View Real-Time Alert Intelligence Feed',
+      category: 'Intelligence',
+      icon: Bell,
+      action: () => {
+        onClose();
+        if (onOpenAlerts) onOpenAlerts();
+      },
+    },
+    {
+      id: 'cmd-rules',
+      title: 'Configure Monitored Event Rules & Weights',
+      category: 'Configuration',
+      icon: Sliders,
+      action: () => {
+        onClose();
+        if (onOpenRulesModal) onOpenRulesModal();
+      },
+    },
     {
       id: 'cmd-investigate',
       title: 'Go to Investigation Omnibar',

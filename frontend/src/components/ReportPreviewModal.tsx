@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   FileText,
@@ -10,10 +10,21 @@ import {
   Printer,
   Sparkles,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  Activity,
+  Layers,
+  Fingerprint
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ThemeMode } from '../types';
+import { PDFExportService } from '../services/pdfExportService';
+import {
+  mockRiskData,
+  mockFundFlow,
+  mockEvidenceItems,
+  mockPriorityLeads,
+} from '../data/mockInvestigationData';
 
 interface ReportPreviewModalProps {
   isOpen: boolean;
@@ -21,29 +32,64 @@ interface ReportPreviewModalProps {
   theme: ThemeMode;
 }
 
+const compilationStages = [
+  'COLLECTING ON-CHAIN INVESTIGATION PROOFS...',
+  'EXTRACTING 4-HOP GRAPH TOPOLOGY...',
+  'ASSEMBLING 4-TIER EVIDENCE LEDGER...',
+  'COMPILING SECTION 91 CrPC LEGAL FORMAT...',
+  'GENERATING FORENSIC DOSSIER PDF...',
+];
+
 export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   isOpen,
   onClose,
   theme,
 }) => {
   const [downloading, setDownloading] = useState(false);
+  const [compilationStageIdx, setCompilationStageIdx] = useState(0);
   const [downloaded, setDownloaded] = useState(false);
   const isDark = theme === 'dark';
 
   if (!isOpen) return null;
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     setDownloading(true);
-    setTimeout(() => {
+    setCompilationStageIdx(0);
+
+    // Step through the visual compilation sequence (Section 15)
+    for (let i = 0; i < compilationStages.length; i++) {
+      setCompilationStageIdx(i);
+      await new Promise((r) => setTimeout(r, 280));
+    }
+
+    try {
+      // Execute true PDF generation via jsPDF
+      await PDFExportService.generateDossierPDF({
+        caseId: 'CT-2026-0184',
+        targetAddress: '0x7A3c9e9b384f912c0192837461abcef0192891F2',
+        chain: 'Ethereum Mainnet',
+        totalLossUsd: 25400,
+        riskData: mockRiskData,
+        fundFlow: mockFundFlow,
+        evidence: mockEvidenceItems,
+        priorityLeads: mockPriorityLeads,
+        assignedOfficer: 'National Cyber Crime Forensics Unit (SIH 2026)',
+      });
+
       setDownloading(false);
       setDownloaded(true);
+
       confetti({
-        particleCount: 75,
+        particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
       });
-      setTimeout(() => setDownloaded(false), 3000);
-    }, 1200);
+
+      setTimeout(() => setDownloaded(false), 4000);
+    } catch (err) {
+      console.error('Failed to generate PDF dossier:', err);
+      setDownloading(false);
+    }
   };
 
   return (
@@ -84,10 +130,22 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
             <button
               onClick={handleDownloadPdf}
               disabled={downloading}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 text-white text-xs font-bold shadow-md shadow-cyan-500/25 flex items-center gap-1.5 transition-all"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 text-white text-xs font-bold shadow-md shadow-cyan-500/25 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-70"
             >
-              {downloaded ? <Check className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
-              <span>{downloading ? 'Compiling PDF...' : downloaded ? 'Downloaded' : 'Download PDF Dossier'}</span>
+              {downloading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : downloaded ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {downloading
+                  ? compilationStages[compilationStageIdx]
+                  : downloaded
+                  ? '✓ Dossier Exported!'
+                  : 'Download PDF Dossier'}
+              </span>
             </button>
 
             <button
@@ -99,8 +157,22 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
           </div>
         </div>
 
+        {/* SECTION 15: PDF GENERATION PROGRESS BANNER (When compiling) */}
+        {downloading && (
+          <div className="px-6 py-2.5 bg-gradient-to-r from-cyan-500/20 via-indigo-500/20 to-transparent border-b border-cyan-500/30 flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-2 text-cyan-300">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+              <span className="font-bold">PDF GENERATION IN PROGRESS:</span>
+              <span>{compilationStages[compilationStageIdx]}</span>
+            </div>
+            <span className="text-cyan-400 font-bold">
+              {Math.round(((compilationStageIdx + 1) / compilationStages.length) * 100)}%
+            </span>
+          </div>
+        )}
+
         {/* Report Content Body (Scrollable Document) */}
-        <div className="p-6 sm:p-10 overflow-y-auto font-mono text-xs space-y-6">
+        <div className="p-6 sm:p-10 overflow-y-auto font-mono text-xs space-y-6 flex-1">
           {/* Document Header */}
           <div className="border-b border-zinc-800 pb-6 flex justify-between items-start">
             <div>

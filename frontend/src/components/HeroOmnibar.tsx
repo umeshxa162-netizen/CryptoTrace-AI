@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue } from 'motion/react';
 import {
   Shield,
   ArrowUp,
@@ -24,9 +24,16 @@ import {
   Sliders,
   Radio,
   FileCode,
-  Lock
+  Lock,
+  Workflow,
+  TrendingUp,
+  GitFork,
+  Cpu,
+  FileCheck,
+  Compass
 } from 'lucide-react';
 import { ThemeMode, OmnibarMode, AttachedFile, ModelOption, BlockchainNetwork } from '../types';
+import { BlockchainInvestigationVisual } from './BlockchainInvestigationVisual';
 
 interface HeroOmnibarProps {
   theme: ThemeMode;
@@ -60,6 +67,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
   const [audioLevel, setAudioLevel] = useState<number[]>([4, 8, 14, 20, 16, 10, 6]);
 
   const heroRef = useRef<HTMLElement | null>(null);
+  const omnibarCardRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const chainMenuRef = useRef<HTMLDivElement | null>(null);
@@ -69,10 +77,6 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
   // Smooth mouse-following spotlight coordinates
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
-
-  const smoothMouseX = useSpring(mouseX, { stiffness: 120, damping: 20 });
-  const smoothMouseY = useSpring(mouseY, { stiffness: 120, damping: 20 });
-
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -136,12 +140,24 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!promptText.trim() && attachedFiles.length === 0) return;
+    if (!promptText.trim() && attachedFiles.length === 0) {
+      // Default to standard suspect if empty
+      onSubmitPrompt('0x7A3c9e9b384f912c0192837461abcef0192891F2', activeMode, isThinkingActive, attachedFiles, selectedChain);
+      return;
+    }
 
     onSubmitPrompt(promptText, activeMode, isThinkingActive, attachedFiles, selectedChain);
     setPromptText('');
     setAttachedFiles([]);
     if (isVoiceRecording) setIsVoiceRecording(false);
+  };
+
+  const handleStartInvestigationClick = () => {
+    // Focus or scroll to Omnibar
+    if (omnibarCardRef.current) {
+      omnibarCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      textareaRef.current?.focus();
+    }
   };
 
   const sampleWallets = [
@@ -178,14 +194,23 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
     'Tron',
   ];
 
+  // Minimal Capability Strip Items (Section 6)
+  const capabilityStrip = [
+    { label: 'AI FORENSICS', icon: Brain },
+    { label: 'NETWORK INTELLIGENCE', icon: Layers },
+    { label: 'ANOMALY DETECTION', icon: Activity },
+    { label: 'CROSS-CHAIN ANALYSIS', icon: Workflow },
+    { label: 'EVIDENCE REPORTING', icon: FileCheck },
+  ];
+
   return (
     <section
       id="investigate"
       ref={heroRef}
       onMouseMove={handleMouseMove}
-      className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col items-center text-center overflow-hidden"
+      className="relative pt-32 pb-20 sm:pt-36 sm:pb-24 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col overflow-hidden"
     >
-      {/* Background Radial Glow mapped to cursor */}
+      {/* Background Radial Spotlight mapped to cursor */}
       <div
         className="absolute inset-0 pointer-events-none opacity-40 transition-opacity duration-300 spotlight-glow"
         style={
@@ -196,69 +221,152 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
         }
       />
 
-      {/* Top Status Strip: System Instrument Bar */}
+      {/* ================================================== */}
+      {/* 1. TWO-COLUMN HERO SECTION (Desktop) / STACKED (Mobile) */}
+      {/* ================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center mb-12">
+        {/* LEFT COLUMN: Logo intro, Hero Typography, Dominant CTA, Capability Strip */}
+        <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
+          {/* Status Instrument Chip */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className={`inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full text-xs font-mono border backdrop-blur-xl ${
+              isDark
+                ? 'bg-zinc-900/80 border-cyan-900/50 text-cyan-400 shadow-md shadow-cyan-950/40'
+                : 'bg-white/90 border-cyan-200 text-cyan-800 shadow-sm'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-bold">SYSTEM OPERATIONAL</span>
+            </span>
+            <span className="text-zinc-600">|</span>
+            <span className="text-zinc-400">EVM RPC CONNECTED</span>
+          </motion.div>
+
+          {/* Hero Titles */}
+          <div className="space-y-3">
+            <motion.h1
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="font-display text-4xl sm:text-6xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]"
+            >
+              <span className={isDark ? 'text-white' : 'text-zinc-950'}>CRYPTO </span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">
+                TRACE-AI
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.h2
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.18 }}
+              className="text-lg sm:text-xl font-bold font-display text-cyan-300 tracking-wide"
+            >
+              AI-Powered Blockchain Forensic Intelligence
+            </motion.h2>
+
+            {/* Supporting text */}
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25 }}
+              className={`text-sm sm:text-base leading-relaxed max-w-xl ${
+                isDark ? 'text-zinc-300 font-sans' : 'text-zinc-700 font-sans'
+              }`}
+            >
+              Trace transactions. Discover hidden relationships. Detect anomalies. Build evidence. Generate forensic reports.
+            </motion.p>
+          </div>
+
+          {/* PRIMARY DOMINANT CTA & SECONDARY ACTION */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.32 }}
+            className="flex items-center gap-3.5 flex-wrap pt-2"
+          >
+            {/* ONE DOMINANT CTA: START INVESTIGATION */}
+            <motion.button
+              onClick={handleStartInvestigationClick}
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="group px-7 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:via-indigo-500 hover:to-purple-500 text-white font-extrabold font-display text-sm tracking-wide shadow-xl shadow-cyan-500/30 flex items-center gap-2.5 transition-all cursor-pointer border border-cyan-400/40"
+              aria-label="Start Blockchain Investigation"
+            >
+              <span>START INVESTIGATION</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
+            </motion.button>
+
+            {/* SECONDARY ACTION */}
+            <button
+              onClick={() => onQuickStart('0x7A3c9e9b384f912c0192837461abcef0192891F2', 'trace', 'Ethereum')}
+              className={`px-5 py-3.5 rounded-2xl border text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                isDark
+                  ? 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:border-cyan-500/40 hover:text-cyan-300 hover:bg-zinc-800'
+                  : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:border-cyan-400 hover:text-cyan-900'
+              }`}
+            >
+              <Play className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Explore Demo Trace (10 ETH)</span>
+            </button>
+          </motion.div>
+
+          {/* 6. MINIMAL CAPABILITY STRIP (Section 6) */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="w-full pt-4 border-t border-zinc-800/60"
+          >
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-[11px] font-mono text-zinc-400">
+              {capabilityStrip.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-cyan-500/30 transition-colors"
+                  >
+                    <Icon className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="font-semibold">{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* RIGHT COLUMN: SOPHISTICATED ANIMATED VISUALIZATION (Section 3) */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="lg:col-span-5 w-full"
+        >
+          <BlockchainInvestigationVisual
+            theme={theme}
+            onSelectNode={(nodeLabel) => {
+              handleStartInvestigationClick();
+            }}
+          />
+        </motion.div>
+      </div>
+
+      {/* ================================================== */}
+      {/* 2. SIGNATURE SMART FORENSIC OMNIBAR WORKSPACE AREA */}
+      {/* ================================================== */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        ref={omnibarCardRef}
+        initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className={`inline-flex items-center gap-3 px-4 py-1.5 rounded-full text-xs font-mono mb-8 border backdrop-blur-xl ${
-          isDark
-            ? 'bg-zinc-900/80 border-cyan-900/50 text-cyan-400 shadow-lg shadow-cyan-950/40'
-            : 'bg-white/90 border-cyan-200 text-cyan-800 shadow-md'
-        }`}
-      >
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>SYSTEM OPERATIONAL</span>
-        </span>
-        <span className="text-zinc-600">|</span>
-        <span className="flex items-center gap-1.5 text-zinc-400">
-          <Activity className="w-3.5 h-3.5 text-cyan-400" />
-          <span>EVM RPC CONNECTED</span>
-        </span>
-        <span className="text-zinc-600 hidden sm:inline">|</span>
-        <span className="hidden sm:flex items-center gap-1.5 text-zinc-400">
-          <Fingerprint className="w-3.5 h-3.5 text-indigo-400" />
-          <span>INTELLIGENCE ONLINE</span>
-        </span>
-      </motion.div>
-
-      {/* Main Headline */}
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.1 }}
-        className="font-display text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl"
-      >
-        <span className={isDark ? 'text-white' : 'text-zinc-950'}>
-          TRACE THE MONEY.{' '}
-        </span>
-        <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">
-          EXPOSE THE NETWORK.
-        </span>
-      </motion.h1>
-
-      {/* Subcopy */}
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className={`text-base sm:text-lg max-w-2xl mb-10 ${
-          isDark ? 'text-zinc-400' : 'text-zinc-600'
-        }`}
-      >
-        Turn a single victim-reported cryptocurrency wallet into an evidence-backed
-        blockchain investigation trail. Built for law enforcement and SIH forensics.
-      </motion.p>
-
-      {/* Signature Smart Forensic Omnibar Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.75, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-3xl relative z-20"
+        transition={{ duration: 0.75, delay: 0.45 }}
+        className="w-full max-w-4xl mx-auto relative z-20 mt-4"
       >
         <div
           onDragOver={(e) => {
@@ -279,7 +387,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
               setAttachedFiles((prev) => [...prev, ...files]);
             }
           }}
-          className={`rounded-3xl border p-3 sm:p-4 shadow-2xl transition-all duration-300 relative ${
+          className={`rounded-3xl border p-4 sm:p-5 shadow-2xl transition-all duration-300 relative ${
             isDark
               ? 'bg-zinc-900/90 border-cyan-900/60 backdrop-blur-2xl shadow-cyan-950/30 hover:border-cyan-500/50'
               : 'bg-white/95 border-zinc-300 backdrop-blur-2xl shadow-xl hover:border-cyan-400'
@@ -300,7 +408,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
                 <button
                   key={m.id}
                   onClick={() => setActiveMode(m.id as OmnibarMode)}
-                  className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
                     isSelected
                       ? isDark
                         ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
@@ -374,9 +482,9 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
             )}
 
             {/* Bottom Controls Bar */}
-            <div className="flex items-center justify-between pt-2 px-1 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between pt-2 px-1 border-t border-zinc-800/50 flex-wrap gap-2">
               {/* Left Utilities (Chain Picker, Evidence Upload, Voice Simulation, Thinking Toggle) */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Blockchain Selector */}
                 <div className="relative" ref={chainMenuRef}>
                   <button
@@ -440,7 +548,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`p-1.5 rounded-lg border text-xs transition-colors ${
+                  className={`p-1.5 rounded-lg border text-xs transition-colors cursor-pointer ${
                     isDark
                       ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-cyan-300'
                       : 'bg-zinc-100 border-zinc-300 text-zinc-600 hover:text-cyan-700'
@@ -454,7 +562,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsVoiceRecording(!isVoiceRecording)}
-                  className={`p-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 ${
+                  className={`p-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
                     isVoiceRecording
                       ? 'bg-red-500/20 border-red-500/50 text-red-400 animate-pulse'
                       : isDark
@@ -481,7 +589,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsThinkingActive(!isThinkingActive)}
-                  className={`px-2 py-1 rounded-lg border text-[11px] font-medium flex items-center gap-1 transition-all ${
+                  className={`px-2 py-1 rounded-lg border text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer ${
                     isThinkingActive
                       ? isDark
                         ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
@@ -500,9 +608,9 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
               {/* Submit CTA Button */}
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold font-display shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
               >
                 <span>Run Forensics</span>
                 <ArrowUp className="w-3.5 h-3.5" />
@@ -518,7 +626,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
             <button
               key={item.address}
               onClick={() => onQuickStart(item.address, item.mode, item.chain)}
-              className={`px-2.5 py-1 rounded-xl border text-[11px] font-mono transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-xl border text-[11px] font-mono transition-all flex items-center gap-1.5 cursor-pointer ${
                 isDark
                   ? 'bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-cyan-500/50 hover:bg-cyan-500/10 hover:text-cyan-300'
                   : 'bg-white border-zinc-200 text-zinc-700 hover:border-cyan-400 hover:bg-cyan-50 hover:text-cyan-900'
@@ -526,7 +634,7 @@ export const HeroOmnibar: React.FC<HeroOmnibarProps> = ({
             >
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
               <span>{item.label}</span>
-              <span className="text-[10px] px-1 py-0.2 rounded bg-cyan-500/20 text-cyan-400">
+              <span className="text-[10px] px-1 py-0.2 rounded bg-cyan-500/20 text-cyan-400 font-bold">
                 {item.badge}
               </span>
             </button>

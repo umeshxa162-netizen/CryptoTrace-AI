@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Navbar } from './components/Navbar';
 import { ParticleBackground } from './components/ParticleBackground';
-import { HeroOmnibar } from './components/HeroOmnibar';
+import { HeroLandingView } from './components/HeroLandingView';
 import { InvestigationLoader } from './components/InvestigationLoader';
 import { ActiveInvestigationView } from './components/ActiveInvestigationView';
 import { DashboardCommandCenter } from './components/DashboardCommandCenter';
@@ -15,6 +15,9 @@ import { Footer } from './components/Footer';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { IntakeWizardModal } from './components/IntakeWizardModal';
 import { ReportPreviewModal } from './components/ReportPreviewModal';
+import { WatchlistManagerModal } from './components/WatchlistManagerModal';
+import { AlertDetailModal } from './components/AlertDetailModal';
+import { AlertRuleConfigModal } from './components/AlertRuleConfigModal';
 import {
   ThemeMode,
   ModelOption,
@@ -22,9 +25,11 @@ import {
   AttachedFile,
   BlockchainNetwork,
   CaseFile,
-  IntakeFormData
+  IntakeFormData,
+  IntelligenceAlert
 } from './types';
 import { mockAvailableModels, mockCaseQueue } from './data/mockInvestigationData';
+import { AlertIntelligenceService } from './services/alertIntelligenceService';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
@@ -32,12 +37,17 @@ export default function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [intakeWizardOpen, setIntakeWizardOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [watchlistModalOpen, setWatchlistModalOpen] = useState(false);
+  const [rulesModalOpen, setRulesModalOpen] = useState(false);
+  const [selectedAlertForDetail, setSelectedAlertForDetail] = useState<IntelligenceAlert | null>(null);
 
   const [activeInvestigationTarget, setActiveInvestigationTarget] = useState<string | null>(null);
   const [isInvestigationLoading, setIsInvestigationLoading] = useState(false);
+  const [unacknowledgedAlertsCount, setUnacknowledgedAlertsCount] = useState(0);
 
   const availableModels: ModelOption[] = mockAvailableModels;
   const [selectedModel, setSelectedModel] = useState<ModelOption>(availableModels[0]);
+  const [dashboardTab, setDashboardTab] = useState<'cases' | 'alerts'>('cases');
 
   // Sync theme with HTML root tag
   useEffect(() => {
@@ -52,6 +62,16 @@ export default function App() {
         'bg-zinc-50 text-zinc-900 antialiased selection:bg-cyan-500/30 selection:text-cyan-900';
     }
   }, [theme]);
+
+  // Unacknowledged alerts live subscription
+  useEffect(() => {
+    const updateAlertsCount = () => {
+      setUnacknowledgedAlertsCount(AlertIntelligenceService.getUnacknowledgedCount());
+    };
+    updateAlertsCount();
+    const unsub = AlertIntelligenceService.subscribe(updateAlertsCount);
+    return () => unsub();
+  }, []);
 
   // Scroll Spy for Navbar Active Section Tracking
   useEffect(() => {
@@ -129,18 +149,34 @@ export default function App() {
     handlePromptSubmit(formData.suspectAddress, 'trace', true, formData.attachments, formData.blockchain);
   };
 
+  const handleInvestigateTarget = (target: string, chain: BlockchainNetwork) => {
+    handlePromptSubmit(target, 'trace', true, [], chain);
+  };
+
   const handleClearSession = () => {
     setActiveInvestigationTarget(null);
     setIsInvestigationLoading(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenAlertsFeed = () => {
+    setDashboardTab('alerts');
+    handleNavigate('dashboard');
+  };
+
+  const handlePromoteAlertToCase = (alert: IntelligenceAlert) => {
+    const newCaseId = `CT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    AlertIntelligenceService.promoteAlertToCase(alert.id, newCaseId);
+    setDashboardTab('cases');
+    handleNavigate('dashboard');
+  };
+
   return (
-    <div className="min-h-screen relative overflow-x-hidden transition-colors duration-500">
+    <div className="min-h-screen relative overflow-x-hidden transition-colors duration-500 bg-zinc-950 text-zinc-100">
       {/* Background Interactive Particle Canvas */}
       <ParticleBackground theme={theme} />
 
-      {/* Glassmorphic Navigation Bar */}
+      {/* Glassmorphic Navigation Bar (Reference Recreation) */}
       <Navbar
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -148,6 +184,10 @@ export default function App() {
         onNavigate={handleNavigate}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenIntakeWizard={() => setIntakeWizardOpen(true)}
+        onOpenWatchlist={() => setWatchlistModalOpen(true)}
+        onOpenAlerts={handleOpenAlertsFeed}
+        onOpenReportModal={() => setReportModalOpen(true)}
+        unacknowledgedAlertsCount={unacknowledgedAlertsCount}
         selectedModel={selectedModel}
         onSelectModel={setSelectedModel}
         availableModels={availableModels}
@@ -155,13 +195,15 @@ export default function App() {
 
       {/* Main Content Layout */}
       <main className="relative z-10">
-        {/* 1. Hero & Signature Smart Forensic Omnibar */}
-        <HeroOmnibar
+        {/* 1. Hero Landing View (Exact UI/UX Reference Recreation) */}
+        <HeroLandingView
           theme={theme}
           selectedModel={selectedModel}
           onSubmitPrompt={handlePromptSubmit}
           onQuickStart={handleQuickStart}
           onOpenIntakeWizard={() => setIntakeWizardOpen(true)}
+          onOpenAlerts={handleOpenAlertsFeed}
+          onOpenReportModal={() => setReportModalOpen(true)}
         />
 
         {/* Anchor for scroll */}
@@ -190,11 +232,16 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* 4. Investigation Command Center Dashboard */}
+        {/* 4. Investigation Command Center Dashboard (Cases + Real-Time Alerts Feed) */}
         <DashboardCommandCenter
           theme={theme}
           onSelectCase={handleSelectCase}
           onStartNewCase={() => setIntakeWizardOpen(true)}
+          onSelectAlert={(alert) => setSelectedAlertForDetail(alert)}
+          onInvestigateTarget={handleInvestigateTarget}
+          onOpenWatchlistModal={() => setWatchlistModalOpen(true)}
+          onOpenRulesModal={() => setRulesModalOpen(true)}
+          activeSubTab={dashboardTab}
         />
 
         {/* 5. Core Capabilities Bento Grid (7-Stage Pipeline & De-Obfuscation) */}
@@ -238,6 +285,9 @@ export default function App() {
         onTriggerInvestigation={handleQuickStart}
         onOpenIntakeWizard={() => setIntakeWizardOpen(true)}
         onOpenReportModal={() => setReportModalOpen(true)}
+        onOpenWatchlist={() => setWatchlistModalOpen(true)}
+        onOpenAlerts={handleOpenAlertsFeed}
+        onOpenRulesModal={() => setRulesModalOpen(true)}
       />
 
       {/* 12. Case Intake Wizard Modal */}
@@ -252,6 +302,31 @@ export default function App() {
       <ReportPreviewModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
+        theme={theme}
+      />
+
+      {/* 14. Real-Time Watchlist Manager Modal */}
+      <WatchlistManagerModal
+        isOpen={watchlistModalOpen}
+        onClose={() => setWatchlistModalOpen(false)}
+        theme={theme}
+        onInvestigateTarget={handleInvestigateTarget}
+      />
+
+      {/* 15. Alert Detail & Explainability Breakdown Modal */}
+      <AlertDetailModal
+        isOpen={!!selectedAlertForDetail}
+        alert={selectedAlertForDetail}
+        onClose={() => setSelectedAlertForDetail(null)}
+        theme={theme}
+        onInvestigateTarget={handleInvestigateTarget}
+        onPromoteToCase={handlePromoteAlertToCase}
+      />
+
+      {/* 16. Event Rules & Detection Configurator Modal */}
+      <AlertRuleConfigModal
+        isOpen={rulesModalOpen}
+        onClose={() => setRulesModalOpen(false)}
         theme={theme}
       />
     </div>
